@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema, Types } from 'mongoose';
 import bcrypt from 'bcrypt';
-import { RoleEnum, statusEnum } from '../typescript/commonenum';
+import { RoleEnum, statusEnum } from '../common/commonEnum';
 
 export interface IUser {
   name: string;

@@ -1,0 +1,123 @@
+openapi: 3.0.0
+info:
+  title: Express Prod Boilerplate (User/Admin segregated)
+  version: 1.0.0
+  description: API documentation grouped by User and Admin, and by feature within each group.
+servers:
+  - url: http://localhost:4000/api
+tags:
+  - name: User - Auth
+    description: Endpoints for user authentication (register/login)
+  - name: User - Products
+    description: Endpoints for browsing products (user-facing)
+  - name: Admin - Auth
+    description: Endpoints for admin authentication (login)
+  - name: Admin - User Management
+    description: Admin endpoints to manage users
+  - name: Admin - Product Management
+    description: Admin endpoints to manage products
+paths:
+  /user/auth/register:
+    post:
+      tags: [User - Auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '201':
+          description: Created
+
+  /user/auth/login:
+    post:
+      tags: [User - Auth]
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: OK
+
+  /user/products:
+    get:
+      tags: [User - Products]
+      summary: List products
+      responses:
+        '200':
+          description: OK
+
+  /admin/auth/login:
+    post:
+      tags: [Admin - Auth]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: OK
+
+  /admin/products:
+    post:
+      tags: [Admin - Product Management]
+      summary: Create product (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string }
+                price: { type: number }
+                stock: { type: number }
+      responses:
+        '201':
+          description: Created
+
+  /admin/products/{id}:
+    put:
+      tags: [Admin - Product Management]
+      summary: Update product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Updated
+    delete:
+      tags: [Admin - Product Management]
+      summary: Delete product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Deleted

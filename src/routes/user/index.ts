@@ -1,6 +1,12 @@
-import { Router } from "express";
-import userAuth from "./user.auth";
+import { Router } from 'express';
+import authRoutes from './authRoutes';
+import profileRoutes from './profileRoutes';
+import frinedRoutes from "./friendRoutes"
 const router = Router();
 
-router.get("/auth", userAuth);
+router.use('/auth', authRoutes);
+router.use('/profile', profileRoutes);
+router.use("/friend",frinedRoutes)
+
+
 export default router;
