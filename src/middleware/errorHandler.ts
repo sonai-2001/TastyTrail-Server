@@ -1,21 +1,48 @@
 import { Request, Response, NextFunction } from 'express';
-import logger from '../config/logger';
+import { ApiError } from '../utils/ApiError';
 
-export function errorHandler(err: any, req: Request, res: Response, next: NextFunction) {
-  const status = err.status || err.statusCode || 500;
-  const isOperational = err.isOperational || status < 500;
+export function errorHandler(
+  err: any,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  let status = 500;
+  let message = 'Something went wrong';
+  let details: any = null;
 
-  logger.error(err.message || 'Unhandled error', { err, path: req.originalUrl, stack: err.stack });
-
-  const payload: any = {
-    success: false,
-    message: err.exposeMessage || (isOperational ? err.message : 'Internal Server Error')
-  };
-
-  if (process.env.NODE_ENV !== 'production') {
-    payload.stack = err.stack;
-    if (err.details) payload.details = err.details;
+  if (err instanceof ApiError) {
+    status = err.status;
+    message = err.message;
+    details = err.details;
+  }
+  else if (err.name === 'ValidationError') {
+    status = 400;
+    message = 'Validation failed';
+    details = err.errors;
+  }
+  else if (err.name === 'CastError') {
+    status = 400;
+    message = 'Invalid ID format';
+  }
+  else if (err.name === 'JsonWebTokenError') {
+    status = 401;
+    message = 'Invalid token';
+  }
+  else if (err.name === 'TokenExpiredError') {
+    status = 401;
+    message = 'Token expired';
   }
 
-  res.status(status).json(payload);
+  console.error(err);
+
+  if (process.env.NODE_ENV === 'production' && !(err instanceof ApiError)) {
+    details = null;
+  }
+
+  res.status(status).json({
+    success: false,
+    message,
+    details,
+  });
 }

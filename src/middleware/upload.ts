@@ -38,14 +38,14 @@ export function createUploader(
     },
   });
 
-  // ✅ File filter with correct type
-  const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-    if (file.mimetype.startsWith("image/")) {
-      cb(null, true);
-    } else {
-      cb(new multer.MulterError("LIMIT_UNEXPECTED_FILE", file.fieldname));
-    }
-  };
+const fileFilter: multer.Options["fileFilter"] = (req, file, cb) => {
+  if (file.mimetype.startsWith("image/")) {
+    cb(null, true);
+  } else {
+    cb(new multer.MulterError("LIMIT_UNEXPECTED_FILE", file.fieldname));
+  }
+};
+
 
   const upload = multer({
     storage,

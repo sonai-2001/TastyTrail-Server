@@ -62,8 +62,7 @@ export const login =asyncHandler(async (req:Request, res:Response)=>{
 
 export const signup=asyncHandler(async(req:Request , res:Response)=>{
   const {email, password, name}=req.body;
-  console.log("🚀 ~ password:", password)
-  console.log("🚀 ~ email:", email)
+  
   if(!email || !password || !name){
     return error(res, {message: 'email, password, name are required', status: 400});
   }
