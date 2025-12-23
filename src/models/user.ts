@@ -1,72 +1,50 @@
-import mongoose, { Document, Schema, Types } from 'mongoose';
+import mongoose, { Document, Schema } from "mongoose";
+import { UserEnum } from "../common/commonEnum";
 import bcrypt from 'bcrypt';
-import { RoleEnum, statusEnum } from '../common/commonEnum';
 
-export interface IUser {
+
+interface IUser extends Document
+{
   name: string;
   email: string;
   password: string;
-  role?: RoleEnum.ADMIN | RoleEnum.USER;
-  bio?: string;
-  fcmToken?: string; // single device FCM token
-  profilePicture?: string;
-  resetPasswordToken?: string;   // for password reset
-  resetPasswordExpires?: number; // timestamp
-  activeToken?: string;  
-  refreshToken?: string;          // for single-session JWT
-  interests: Types.ObjectId[];
-  status:statusEnum.ACTIVE | statusEnum.INACTIVE 
+  role: string;
+  createdAt: Date;
+  updatedAt: Date;
+  status: UserEnum.ACTIVE | UserEnum.INACTIVE | UserEnum.PENDING;
+  isEmailVerified: boolean;
+  comparePassword(candidatePassword: string): Promise<boolean>;
+ 
 }
 
-export interface IUserDoc extends IUser, Document {
-  comparePassword(candidate: string): Promise<boolean>;
-}
-
-const userSchema = new Schema<IUserDoc>({
+const userSchema = new Schema<IUser>({
   name: { type: String, required: true },
-  email: { 
-    type: String, 
-    required: true, 
-    unique: true, 
-    index: true,
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true ,select: false},
+  role: {
+    type: String,
+    required: true,
+    enum: ['admin', 'user', 'restaurant_owner', 'delivery_person'],
+    default: 'user',
   },
-  password: { type: String, required: true, select: false },
-  profilePicture: { type: String },
-  bio: { type: String, maxlength: 200 },
-  fcmToken: { type: String }, // only one device
-  role: { type: String, enum: [RoleEnum.ADMIN, RoleEnum.USER], default: RoleEnum.USER },
-  resetPasswordToken: { type: String, select: false },
-  resetPasswordExpires: { type: Number, select: false },
-  activeToken: { type: String, select: false },
-  refreshToken: { type: String, select: false }, // single-session JWT
   status:{
-    type:String,
-    enum:[statusEnum.ACTIVE,statusEnum.INACTIVE],
-     default:statusEnum.ACTIVE},
- // single-session JWT
-  interests: {
-  type: [Schema.Types.ObjectId],
-  ref: 'Interests',  // Applies to each ID inside the array
-  default: []
-}
+    type: String,
+    enum: UserEnum,
+    default: UserEnum.PENDING,
+  },
+  isEmailVerified: { type: Boolean, default: false },
+  
+})
 
-}, { timestamps: true });
-
-// Hash password before saving
-userSchema.pre<IUserDoc>('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (err) {
-    next(err as Error);
+userSchema.pre('save', async function (next) {
+  if (this.isModified('password')) {
+    this.password = await bcrypt.hash(this.password, 10);
   }
+  next();
 });
 
-// Compare password method
-userSchema.methods.comparePassword = function(candidate: string): Promise<boolean> {
-  return bcrypt.compare(candidate, this.password);
+userSchema.methods.comparePassword = async function (candidatePassword: string) {
+  return await bcrypt.compare(candidatePassword, this.password);
 };
 
-export default mongoose.model<IUserDoc>('User', userSchema);
+export const User = mongoose.model<IUser>('User', userSchema);
