@@ -1,5 +1,5 @@
 import mongoose, { Document, Schema } from "mongoose";
-import { UserEnum } from "../common/commonEnum";
+import { RoleEnum, UserEnum } from "../common/commonEnum";
 import bcrypt from 'bcrypt';
 
 
@@ -9,11 +9,15 @@ interface IUser extends Document
   email: string;
   password: string;
   role: string;
-  createdAt: Date;
-  updatedAt: Date;
   status: UserEnum.ACTIVE | UserEnum.INACTIVE | UserEnum.PENDING;
   isEmailVerified: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+
+
   comparePassword(candidatePassword: string): Promise<boolean>;
+
+  
  
 }
 
@@ -24,8 +28,8 @@ const userSchema = new Schema<IUser>({
   role: {
     type: String,
     required: true,
-    enum: ['admin', 'user', 'restaurant_owner', 'delivery_person'],
-    default: 'user',
+    enum: [RoleEnum.ADMIN, RoleEnum.USER, RoleEnum.RESTUAURANT_OWNER, RoleEnum.DELIVERY_PERSON],
+    default: RoleEnum.USER,
   },
   status:{
     type: String,
@@ -33,7 +37,11 @@ const userSchema = new Schema<IUser>({
     default: UserEnum.PENDING,
   },
   isEmailVerified: { type: Boolean, default: false },
+
   
+  
+},{
+  timestamps: true,
 })
 
 userSchema.pre('save', async function (next) {
@@ -47,4 +55,4 @@ userSchema.methods.comparePassword = async function (candidatePassword: string) 
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-export const User = mongoose.model<IUser>('User', userSchema);
+export  const User = mongoose.model<IUser>('User', userSchema);

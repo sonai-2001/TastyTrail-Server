@@ -1,12 +1,8 @@
-import { Router } from 'express';
-import authRoutes from './authRoutes';
-import profileRoutes from './profileRoutes';
-import interestsRoutes from './intersetsRoutes'
+import { Router } from "express";
+import userRoutes from "./userRoutes";
+const router= Router()
 
-const router = Router();
 
-router.use('/auth', authRoutes);
-router.use('/profile', profileRoutes);
-router.use('/interests', interestsRoutes);
+router.use("/user",userRoutes )
 
 export default router;
