@@ -1,58 +1,105 @@
 import mongoose, { Document, Schema } from "mongoose";
-import { RoleEnum, UserEnum } from "../common/commonEnum";
-import bcrypt from 'bcrypt';
+import bcrypt from "bcrypt";
+import { RoleEnum, UserEnum, OnboardingStep } from "../common/commonEnum";
 
-
-interface IUser extends Document
-{
-  name: string;
+export interface IUser extends Document {
+  fullName: string;
   email: string;
   password: string;
-  role: string;
-  status: UserEnum.ACTIVE | UserEnum.INACTIVE | UserEnum.PENDING;
+
+  /** Roles & Identity */
+  roles: RoleEnum[];          // assigned roles
+  activeRole: RoleEnum;       // currently operating role
+
+  /** Account state */
+  status: UserEnum;           // PENDING | ACTIVE | INACTIVE
   isEmailVerified: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  onboardingStep: OnboardingStep;
 
-
+  /** Security */
   comparePassword(candidatePassword: string): Promise<boolean>;
 
-  
- 
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const userSchema = new Schema<IUser>({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true ,select: false},
-  role: {
-    type: String,
-    required: true,
-    enum: [RoleEnum.ADMIN, RoleEnum.USER, RoleEnum.RESTUAURANT_OWNER, RoleEnum.DELIVERY_PERSON],
-    default: RoleEnum.USER,
-  },
-  status:{
-    type: String,
-    enum: UserEnum,
-    default: UserEnum.PENDING,
-  },
-  isEmailVerified: { type: Boolean, default: false },
+const userSchema = new Schema<IUser>(
+  {
+    fullName: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 2
+    },
 
-  
-  
-},{
-  timestamps: true,
-})
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true
+    },
 
-userSchema.pre('save', async function (next) {
-  if (this.isModified('password')) {
-    this.password = await bcrypt.hash(this.password, 10);
-  }
+    password: {
+      type: String,
+      required: true,
+      select: false
+    },
+
+    roles: {
+      type: [String],
+      enum: Object.values(RoleEnum),
+      default: [RoleEnum.USER]
+    },
+
+    activeRole: {
+      type: String,
+      enum: Object.values(RoleEnum),
+      default: RoleEnum.USER
+    },
+
+    status: {
+      type: String,
+      enum: Object.values(UserEnum),
+      default: UserEnum.PENDING
+    },
+
+    isEmailVerified: {
+      type: Boolean,
+      default: false
+    },
+
+    onboardingStep: {
+      type: String,
+      enum: Object.values(OnboardingStep),
+      default: OnboardingStep.REGISTERED
+    }
+  },
+  { timestamps: true }
+);
+
+/* 🛡 Password hashing */
+userSchema.pre<IUser>("save", async function (next) {
+  if (!this.isModified("password")) return next();
+
+  this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
-userSchema.methods.comparePassword = async function (candidatePassword: string) {
-  return await bcrypt.compare(candidatePassword, this.password);
+/* 🔑 Compare password method */
+userSchema.methods.comparePassword = async function (
+  candidatePassword: string
+) {
+  return bcrypt.compare(candidatePassword, this.password);
 };
 
-export  const User = mongoose.model<IUser>('User', userSchema);
+/* 🛡 Hide password from JSON responses */
+userSchema.set("toJSON", {
+  transform: (_doc, ret) => {
+    delete ret.password;
+    return ret;
+  }
+});
+
+export const User = mongoose.model<IUser>("User", userSchema);

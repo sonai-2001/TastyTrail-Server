@@ -12,18 +12,20 @@ export enum UserEnum{
   PENDING= 'pending',
 };
 
-export enum checkEnum {
-    CHECK = 'check',
-}
-
-
 export enum statusEnum {
   ACTIVE='active',
   INACTIVE='inactive'
 }
 
-export enum friendStatus{
-  PENDING='pending',
-  ACCEPTED='accepted',
-  REJECTED = 'REJECTED'
+export enum OnboardingStep {
+  REGISTERED = "REGISTERED",
+  EMAIL_VERIFIED = "EMAIL_VERIFIED",
+
+  USER_PROFILE = "USER_PROFILE",          // address, lat/lng
+  OWNER_PROFILE = "OWNER_PROFILE",        // restaurant
+  DRIVER_PROFILE = "DRIVER_PROFILE",
+
+  COMPLETED = "COMPLETED"
 }
+
+

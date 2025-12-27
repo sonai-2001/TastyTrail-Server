@@ -1,15 +1,13 @@
 import { Router } from 'express';
+import { login, register, resendOtp, verifyOtp } from '../../controllers/auth/authController';
 
 const router = Router();
 
-router.post('/login', (req, res) => {
-  // Handle user login
-  res.json({ success: true, message: 'User logged in' });
-});
+router.post('/login', login);
 
-router.post('/register', (req, res) => {
-  // Handle user registration
-  res.json({ success: true, message: 'User registered' });
-});
+router.post('/register', register);
+
+router.post('/verifyOtp', verifyOtp);
+router.post('/resendOtp', resendOtp);
 
 export default router;
