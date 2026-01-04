@@ -3,7 +3,7 @@ import { RoleEnum, UserEnum, OnboardingStep } from "../../common/commonEnum";
 import bcrypt from "bcrypt";
 import { sendEmail } from "../../utils/sendEmail";
 import { ApiError } from "../../utils/ApiError";
-import { User } from "../../models/User";
+import { User } from "../../models/user";
 import { EmailOtp } from "../../models/Otp";
 import { generateToken } from "../../utils/generateJwt";
 
@@ -17,6 +17,7 @@ interface RegisterInput {
 interface LoginInput {
   email: string;
   password: string;
+  role?:RoleEnum;
 }
 
 
@@ -40,7 +41,25 @@ export const registerService = async ({
   // 3️⃣ Check if user already exists
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    throw new ApiError("Email already registered please login", 409);
+    // throw new ApiError("Email already registered please login", 409);
+
+    if (existingUser.roles.includes(role)) {
+    throw new ApiError(`Already registered as ${role}`, 409);
+  }
+
+  // add new role
+  existingUser.roles.push(role);
+  existingUser.onboarding.set(role, { step: OnboardingStep.REGISTERED });
+
+  await existingUser.save();
+
+  return {
+    id: existingUser._id,
+    email: existingUser.email,
+    role,
+    onboardingStep: OnboardingStep.REGISTERED,
+    message: `Role ${role} added successfully`
+  };
   }
 
   // 4️⃣ Create user
@@ -52,7 +71,10 @@ export const registerService = async ({
     activeRole: role,
     status: UserEnum.PENDING,
     isEmailVerified: false,
-    onboardingStep: OnboardingStep.REGISTERED
+    // onboardingStep: OnboardingStep.REGISTERED,
+     onboarding: new Map([
+      [role, { step: OnboardingStep.REGISTERED }]
+    ])
   });
 
   // 5️⃣ Generate OTP
@@ -89,7 +111,8 @@ await sendEmail({
     fullName: user.fullName,
     email: user.email,
     role: role,
-    onboardingStep: user.onboardingStep,
+    // onboardingStep: user.onboardingStep,
+     onboardingStep: OnboardingStep.REGISTERED,
     message: "Registration successful, please verify your email"
   };
 };
@@ -121,7 +144,12 @@ export const verifyOtpService = async (userId: string, otp: string) => {
 
   user.isEmailVerified = true;
   user.status = UserEnum.ACTIVE;
-  user.onboardingStep = OnboardingStep.EMAIL_VERIFIED;
+
+  // if (user.activeRole !== RoleEnum.ADMIN) {
+  //   user.onboarding.set(user.activeRole, {
+  //     step: OnboardingStep.EMAIL_VERIFIED
+  //   });
+  // }
 
   await user.save();
 
@@ -133,7 +161,11 @@ export const verifyOtpService = async (userId: string, otp: string) => {
     fullName: user.fullName,
     email: user.email,
     role: user.activeRole,
-    onboardingStep: user.onboardingStep,
+    // onboardingStep: user.onboardingStep,
+    onboardingStep:
+      user.activeRole === RoleEnum.ADMIN
+        ? null
+        : user.onboarding.get(user.activeRole)?.step,
     message: "Email verified successfully"
   };
 };
@@ -177,7 +209,7 @@ export const resendOtpService = async (userId: string , duringLogin=false) => {
 
 
 
-export const loginService = async ({ email, password }: LoginInput) => {
+export const loginService = async ({ email, password,role }: LoginInput) => {
   // 1️⃣ Find user by email
   const user = await User.findOne({ email }).select("+password");
   if (!user) throw new ApiError("Invalid credentials", 401);
@@ -193,30 +225,61 @@ export const loginService = async ({ email, password }: LoginInput) => {
     return {
       id: user._id,
       email: user.email,
-      onboardingStep: user.onboardingStep,
+      // onboardingStep: user.onboardingStep,
+      onboardingStep: user.activeRole === RoleEnum.ADMIN ? null : user.onboarding.get(user.activeRole)?.step,
       message: "Email not verified. Please check your email for OTP"
     };
   }
 
-  // 4️⃣ Check onboarding step
-  if (user.onboardingStep !== OnboardingStep.COMPLETED) {
+  if(!role && user.roles.length>1){
     return {
       id: user._id,
       email: user.email,
-      role: user.activeRole,
-      onboardingStep: user.onboardingStep,
-      message: "Onboarding not completed. Redirect to onboarding."
-    };
+      roles: user.roles,
+      message: "Multiple roles found. Please select role to login"
+    }
+  }
+
+  const activeRole=role || user.roles[0];
+
+
+
+  // 4️⃣ Check onboarding step
+  // if (user.onboardingStep !== OnboardingStep.COMPLETED) {
+  //   return {
+  //     id: user._id,
+  //     email: user.email,
+  //     role: user.activeRole,
+  //     onboardingStep: user.onboardingStep,
+  //     message: "Onboarding not completed. Redirect to onboarding."
+  //   };
+  // }
+
+  if (activeRole !== RoleEnum.ADMIN) {
+    const roleStep = user.onboarding.get(activeRole)?.step;
+
+    if (roleStep !== OnboardingStep.COMPLETED) {
+      return {
+        id: user._id,
+        email: user.email,
+        role: activeRole,
+        onboardingStep: roleStep,
+        message: "Onboarding not completed. Redirect to onboarding."
+      };
+    }
   }
 
   // 5️⃣ Generate JWT token (example)
-  const token = generateToken(user._id, user.activeRole); // implement JWT utility
+  const token = generateToken(user._id, activeRole); // implement JWT utility
+
+  user.activeRole = activeRole;
+  await user.save();
 
   return {
     id: user._id,
     fullName: user.fullName,
     email: user.email,
-    role: user.activeRole,
+    role: activeRole,
     token,
     message: "Login successful"
   };

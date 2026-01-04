@@ -7,8 +7,8 @@ import { loginService, registerService, resendOtpService, verifyOtpService } fro
 
 // login controller
 export const login = asyncHandler(async (req: Request, res: Response) => {
-const { email, password } = req.body;
-const  loginResponse  = await loginService({ email, password });
+const { email, password,role } = req.body;
+const  loginResponse  = await loginService({ email, password,role });
 
 success(res, { data: loginResponse, message: "User logged in successfully" });
 
@@ -16,6 +16,7 @@ success(res, { data: loginResponse, message: "User logged in successfully" });
 
 // register controller
 export const register = asyncHandler(async (req: Request, res: Response) => {
+
   const { fullName, email, password, role } = req.body;
 
   const user = await registerService({ fullName, email, password, role });

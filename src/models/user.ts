@@ -14,7 +14,13 @@ export interface IUser extends Document {
   /** Account state */
   status: UserEnum;           // PENDING | ACTIVE | INACTIVE
   isEmailVerified: boolean;
-  onboardingStep: OnboardingStep;
+  // onboardingStep: OnboardingStep;
+   onboarding: Map<
+    RoleEnum,
+    {
+      step: OnboardingStep;
+    }
+  >;
 
   /** Security */
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -70,11 +76,26 @@ const userSchema = new Schema<IUser>(
       default: false
     },
 
-    onboardingStep: {
-      type: String,
-      enum: Object.values(OnboardingStep),
-      default: OnboardingStep.REGISTERED
-    }
+    // onboardingStep: {
+    //   type: String,
+    //   enum: Object.values(OnboardingStep),
+    //   default: OnboardingStep.REGISTERED
+    // }
+onboarding: {
+  type: Map,
+  of: new Schema(
+    {
+      step: {
+        type: String,
+        enum: Object.values(OnboardingStep),
+        default: OnboardingStep.REGISTERED
+      }
+    },
+    { _id: false }
+  ),
+  default: {}
+}
+
   },
   { timestamps: true }
 );

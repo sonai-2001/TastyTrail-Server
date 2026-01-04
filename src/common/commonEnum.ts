@@ -17,6 +17,7 @@ export enum statusEnum {
   INACTIVE='inactive'
 }
 
+/*
 export enum OnboardingStep {
   REGISTERED = "REGISTERED",
   EMAIL_VERIFIED = "EMAIL_VERIFIED",
@@ -25,6 +26,17 @@ export enum OnboardingStep {
   OWNER_PROFILE = "OWNER_PROFILE",        // restaurant
   DRIVER_PROFILE = "DRIVER_PROFILE",
 
+  COMPLETED = "COMPLETED"
+}
+*/
+
+export enum OnboardingStep {
+  REGISTERED = "REGISTERED",          // role added
+  EMAIL_VERIFIED = "EMAIL_VERIFIED",
+  PROFILE_INCOMPLETE = "PROFILE_INCOMPLETE",
+  DOCUMENTS_PENDING = "DOCUMENTS_PENDING", // KYC, license, etc
+  REVIEW_PENDING = "REVIEW_PENDING",  // admin review
+  APPROVED = "APPROVED",              // optional
   COMPLETED = "COMPLETED"
 }
 

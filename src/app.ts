@@ -3,12 +3,14 @@ import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
-import routes from './routes';
+import apiRoutes from "./routes/api";
 import notFound from './middleware/notFound';
 import { errorHandler } from './middleware/errorHandler';
 import logger from './config/logger';
 import cookieParser from 'cookie-parser';
 import path from 'path';
+import listEndpoints from 'express-list-endpoints';
+
 
 const app = express();
 
@@ -18,7 +20,6 @@ app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 app.use('/uploads', express.static(path.resolve('uploads')));
-
 
 
 if (process.env.NODE_ENV !== 'test') {
@@ -31,7 +32,10 @@ app.use(rateLimit({ windowMs: 60000, max: 100 }));
 
 // Routes
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
-app.use('/api', routes);
+
+app.use('/api', apiRoutes);
+
+console.log(listEndpoints(app));
 
 // Error handling
 app.use(notFound);
