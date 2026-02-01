@@ -56,13 +56,13 @@ const userSchema = new Schema<IUser>(
     roles: {
       type: [String],
       enum: Object.values(RoleEnum),
-      default: [RoleEnum.CUSTOMER]
+      default: [RoleEnum.USER]
     },
 
     activeRole: {
       type: String,
       enum: Object.values(RoleEnum),
-      default: RoleEnum.CUSTOMER
+      default: RoleEnum.USER
     },
 
     status: {
