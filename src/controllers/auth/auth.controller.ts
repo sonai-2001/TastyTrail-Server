@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../../middleware/asyncHandler";
 import { success } from "../../utils/responses";
-import { loginService, registerService, resendOtpService, verifyOtpService } from "../../services/auth/authService";
+import { loginService, registerService, resendOtpService, verifyOtpService } from "../../services/auth/auth.service";
 
 
 

@@ -9,8 +9,6 @@ import { errorHandler } from './middleware/errorHandler';
 import logger from './config/logger';
 import cookieParser from 'cookie-parser';
 import path from 'path';
-import listEndpoints from 'express-list-endpoints';
-
 
 const app = express();
 
@@ -18,6 +16,7 @@ const app = express();
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use('/uploads', express.static(path.resolve('uploads')));
 
@@ -35,7 +34,6 @@ app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
 app.use('/api', apiRoutes);
 
-console.log(listEndpoints(app));
 
 // Error handling
 app.use(notFound);

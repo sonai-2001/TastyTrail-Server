@@ -1,4 +1,5 @@
 import { JwtPayload } from "jsonwebtoken";
+import { Types } from "mongoose";
 import { RoleEnum } from "../../common/commonEnum";
 
 declare global {
@@ -6,12 +7,14 @@ declare global {
     interface UserPayload extends JwtPayload {
       id: Types.ObjectId;
       email: string;
-      role: string;
+      role: RoleEnum;
     }
 
     interface Request {
       user?: UserPayload;
-      role?: RoleEnum.ADMIN | RoleEnum.USER;
     }
   }
 }
+
+export {};
+

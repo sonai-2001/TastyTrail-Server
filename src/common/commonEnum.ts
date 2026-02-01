@@ -1,9 +1,17 @@
-export enum RoleEnum {
-  ADMIN = 'admin',
-  USER = 'user',
-  RESTUAURANT_OWNER = 'restaurant_owner',
-  DELIVERY_PERSON = 'delivery_person',
+// export enum RoleEnum {
+//   ADMIN = 'admin',
+//   USER = 'user',
+//   MERCHANT='merchant',
+//   DELIVERY_PERSON = 'delivery_person',
+//   OUTLET_STAFF='outlet_staff'
+// }
 
+export enum RoleEnum {
+  ADMIN = "admin",
+  USER = "user",
+  RESTAURANT_OWNER = "restaurant_owner",
+  OUTLET_STAFF = "outlet_staff",
+  DELIVERY_PARTNER = "delivery_partner"
 }
 
 export enum UserEnum{
@@ -31,13 +39,65 @@ export enum OnboardingStep {
 */
 
 export enum OnboardingStep {
-  REGISTERED = "REGISTERED",          // role added
+  REGISTERED = "REGISTERED",        
   EMAIL_VERIFIED = "EMAIL_VERIFIED",
+  MERCHANT_CREATED='MERCHANT_CREATED',
   PROFILE_INCOMPLETE = "PROFILE_INCOMPLETE",
-  DOCUMENTS_PENDING = "DOCUMENTS_PENDING", // KYC, license, etc
-  REVIEW_PENDING = "REVIEW_PENDING",  // admin review
-  APPROVED = "APPROVED",              // optional
+  DOCUMENTS_PENDING = "DOCUMENTS_PENDING",
+  REVIEW_PENDING = "REVIEW_PENDING",
+  APPROVED = "APPROVED",          
   COMPLETED = "COMPLETED"
 }
 
+export enum ServiceTypeEnum {
+  DELIVERY_ONLY = "DELIVERY_ONLY",
+  DINE_IN_ONLY = "DINE_IN_ONLY",
+  DELIVERY_AND_DINE_IN = "DELIVERY_AND_DINE_IN"
+}
 
+export enum MerchantApprovalStatusEnum {
+  PENDING = "PENDING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED"
+}
+
+export enum MerchantOperationalStatusEnum {
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE",
+  SUSPENDED = "SUSPENDED"
+}
+
+export enum OutletApprovalStatusEnum {
+  PENDING = "PENDING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED"
+}
+
+export enum OutletOperationalStatusEnum {
+  ONLINE='online',
+  OFFLINE='offline',
+  ACTIVE = "active",
+  INACTIVE = "inactive",     // closed by owner
+}
+
+export enum OutletUserRoleEnum {
+  OWNER = "OWNER",         // Full access — usually the merchant themselves
+  MANAGER = "MANAGER",     // Day-to-day outlet management (future use)
+  STAFF = "STAFF"          // Limited access — e.g., orders, kitchen tasks
+}
+
+export enum BankStatusEnum {
+  PENDING = "PENDING",
+  VERIFIED = "VERIFIED",
+  REJECTED = "REJECTED",
+}
+
+// enums/onboarding.enum.ts
+export enum OutletOnboardingStep {
+  BASIC_INFO = "BASIC_INFO",
+  ADDRESS = "ADDRESS",
+  CONTACT_POINT = "CONTACT_POINT",
+  DOCUMENTS = "DOCUMENTS",
+  MENU = "MENU",
+  REVIEW = "REVIEW"
+}

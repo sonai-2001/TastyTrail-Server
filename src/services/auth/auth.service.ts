@@ -1,4 +1,3 @@
-
 import { RoleEnum, UserEnum, OnboardingStep } from "../../common/commonEnum";
 import bcrypt from "bcrypt";
 import { sendEmail } from "../../utils/sendEmail";
@@ -8,25 +7,19 @@ import { EmailOtp } from "../../models/Otp";
 import { generateToken } from "../../utils/generateJwt";
 
 interface RegisterInput {
-    fullName: string;
-    email: string;
-    password: string;
-    role: RoleEnum;
+  fullName: string;
+  email: string;
+  password: string;
+  role: RoleEnum;
 }
 
 interface LoginInput {
   email: string;
   password: string;
-  role?:RoleEnum;
+  role?: RoleEnum;
 }
 
-
-export const registerService = async ({
-  fullName,
-  email,
-  password,
-  role 
-}: RegisterInput) => {
+export const registerService = async ({ fullName, email, password, role }: RegisterInput) => {
   // 1️⃣ Validate required fields
   if (!fullName || !email || !password || !role) {
     throw new ApiError("Full name, email, password and role are required", 400);
@@ -44,22 +37,22 @@ export const registerService = async ({
     // throw new ApiError("Email already registered please login", 409);
 
     if (existingUser.roles.includes(role)) {
-    throw new ApiError(`Already registered as ${role}`, 409);
-  }
+      throw new ApiError(`Already registered as ${role}`, 409);
+    }
 
-  // add new role
-  existingUser.roles.push(role);
-  existingUser.onboarding.set(role, { step: OnboardingStep.REGISTERED });
+    // add new role
+    existingUser.roles.push(role);
+    existingUser.onboarding.set(role, { step: OnboardingStep.REGISTERED });
 
-  await existingUser.save();
+    await existingUser.save();
 
-  return {
-    id: existingUser._id,
-    email: existingUser.email,
-    role,
-    onboardingStep: OnboardingStep.REGISTERED,
-    message: `Role ${role} added successfully`
-  };
+    return {
+      id: existingUser._id,
+      email: existingUser.email,
+      role,
+      onboardingStep: OnboardingStep.REGISTERED,
+      message: `Role ${role} added successfully`,
+    };
   }
 
   // 4️⃣ Create user
@@ -71,10 +64,7 @@ export const registerService = async ({
     activeRole: role,
     status: UserEnum.PENDING,
     isEmailVerified: false,
-    // onboardingStep: OnboardingStep.REGISTERED,
-     onboarding: new Map([
-      [role, { step: OnboardingStep.REGISTERED }]
-    ])
+    onboarding: new Map([[role, { step: OnboardingStep.REGISTERED }]]),
   });
 
   // 5️⃣ Generate OTP
@@ -86,7 +76,7 @@ export const registerService = async ({
     userId: user._id,
     otpHash,
     expiresAt,
-    attempts: 0
+    attempts: 0,
   });
 
   const html = `
@@ -98,12 +88,11 @@ export const registerService = async ({
   </div>
 `;
 
-await sendEmail({
-  to: user.email,
-  subject: "Verify Your Email",
-  html
-});
-
+  await sendEmail({
+    to: user.email,
+    subject: "Verify Your Email",
+    html,
+  });
 
   // 7️⃣ Return minimal safe user info
   return {
@@ -111,13 +100,10 @@ await sendEmail({
     fullName: user.fullName,
     email: user.email,
     role: role,
-    // onboardingStep: user.onboardingStep,
-     onboardingStep: OnboardingStep.REGISTERED,
-    message: "Registration successful, please verify your email"
+    onboardingStep: OnboardingStep.REGISTERED,
+    message: "Registration successful, please verify your email",
   };
 };
-
-
 
 export const verifyOtpService = async (userId: string, otp: string) => {
   const otpRecord = await EmailOtp.findOne({ userId });
@@ -145,12 +131,6 @@ export const verifyOtpService = async (userId: string, otp: string) => {
   user.isEmailVerified = true;
   user.status = UserEnum.ACTIVE;
 
-  // if (user.activeRole !== RoleEnum.ADMIN) {
-  //   user.onboarding.set(user.activeRole, {
-  //     step: OnboardingStep.EMAIL_VERIFIED
-  //   });
-  // }
-
   await user.save();
 
   // Delete OTP after verification
@@ -161,18 +141,12 @@ export const verifyOtpService = async (userId: string, otp: string) => {
     fullName: user.fullName,
     email: user.email,
     role: user.activeRole,
-    // onboardingStep: user.onboardingStep,
-    onboardingStep:
-      user.activeRole === RoleEnum.ADMIN
-        ? null
-        : user.onboarding.get(user.activeRole)?.step,
-    message: "Email verified successfully"
+    onboardingStep: user.activeRole === RoleEnum.ADMIN ? null : user.onboarding.get(user.activeRole)?.step,
+    message: "Email verified successfully",
   };
 };
 
-
-
-export const resendOtpService = async (userId: string , duringLogin=false) => {
+export const resendOtpService = async (userId: string, duringLogin = false) => {
   const user = await User.findById(userId);
   if (!user) throw new ApiError("User not found", 404);
   if (user.isEmailVerified) throw new ApiError("Email already verified", 400);
@@ -183,11 +157,7 @@ export const resendOtpService = async (userId: string , duringLogin=false) => {
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
   // Save OTP (overwrite existing)
-  await EmailOtp.findOneAndUpdate(
-    { userId },
-    { otpHash, expiresAt, attempts: 0 },
-    { upsert: true }
-  );
+  await EmailOtp.findOneAndUpdate({ userId }, { otpHash, expiresAt, attempts: 0 }, { upsert: true });
   const subject = duringLogin ? "Otp has been sent" : "Resend OTP - MyApp";
   // Send OTP via HTML email
   const html = `
@@ -201,15 +171,13 @@ export const resendOtpService = async (userId: string , duringLogin=false) => {
   await sendEmail({
     to: user.email,
     subject: subject,
-    html
+    html,
   });
 
-  return { message: `OTP ${duringLogin ? 'sent' : 'resent'} successfully` };
+  return { message: `OTP ${duringLogin ? "sent" : "resent"} successfully` };
 };
 
-
-
-export const loginService = async ({ email, password,role }: LoginInput) => {
+export const loginService = async ({ email, password, role }: LoginInput) => {
   // 1️⃣ Find user by email
   const user = await User.findOne({ email }).select("+password");
   if (!user) throw new ApiError("Invalid credentials", 401);
@@ -220,52 +188,38 @@ export const loginService = async ({ email, password,role }: LoginInput) => {
 
   // 3️⃣ Check if email verified
   if (!user.isEmailVerified) {
-
     await resendOtpService(user._id.toString());
-    return {
+    throw new ApiError("Email not verified. Please check your email for OTP", 400, {
       id: user._id,
       email: user.email,
-      // onboardingStep: user.onboardingStep,
       onboardingStep: user.activeRole === RoleEnum.ADMIN ? null : user.onboarding.get(user.activeRole)?.step,
-      message: "Email not verified. Please check your email for OTP"
-    };
+    });
   }
 
-  if(!role && user.roles.length>1){
-    return {
+  if (!role && user.roles.length > 1) {
+    throw new ApiError("Multiple roles found. Please select role to login", 400, {
       id: user._id,
       email: user.email,
       roles: user.roles,
-      message: "Multiple roles found. Please select role to login"
-    }
+    });
   }
 
-  const activeRole=role || user.roles[0];
+  const activeRole = role || user.roles[0];
 
-
-
-  // 4️⃣ Check onboarding step
-  // if (user.onboardingStep !== OnboardingStep.COMPLETED) {
-  //   return {
-  //     id: user._id,
-  //     email: user.email,
-  //     role: user.activeRole,
-  //     onboardingStep: user.onboardingStep,
-  //     message: "Onboarding not completed. Redirect to onboarding."
-  //   };
-  // }
+  if (!user.roles.includes(activeRole)) {
+    throw new ApiError("Invalid role for this user.", 400);
+  }
 
   if (activeRole !== RoleEnum.ADMIN) {
     const roleStep = user.onboarding.get(activeRole)?.step;
 
     if (roleStep !== OnboardingStep.COMPLETED) {
-      return {
+      throw new ApiError("Onboarding not completed. Redirect to onboarding.", 400, {
         id: user._id,
         email: user.email,
-        role: activeRole,
+        role: user.activeRole,
         onboardingStep: roleStep,
-        message: "Onboarding not completed. Redirect to onboarding."
-      };
+      });
     }
   }
 
@@ -281,7 +235,5 @@ export const loginService = async ({ email, password,role }: LoginInput) => {
     email: user.email,
     role: activeRole,
     token,
-    message: "Login successful"
   };
 };
-
