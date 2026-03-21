@@ -1,7 +1,7 @@
 // errors/ApiError.ts
 export class ApiError extends Error {
   status: number;
-  details?: any;
+  details?: any; 
 
   constructor(message: string, status = 500, details?: any) {
     super(message);

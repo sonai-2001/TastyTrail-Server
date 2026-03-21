@@ -1,10 +1,9 @@
-// export enum RoleEnum {
-//   ADMIN = 'admin',
-//   USER = 'user',
-//   MERCHANT='merchant',
-//   DELIVERY_PERSON = 'delivery_person',
-//   OUTLET_STAFF='outlet_staff'
-// }
+export enum UserRole {
+  USER = "user",
+  ADMIN = "admin",
+  OWNER = "owner",
+  DRIVER = "driver",
+}
 
 export enum RoleEnum {
   ADMIN = "admin",

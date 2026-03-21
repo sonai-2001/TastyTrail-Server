@@ -1,4 +1,4 @@
-import { RoleEnum, UserEnum, OnboardingStep } from "../../common/commonEnum";
+import { RoleEnum, UserEnum, OnboardingStep, UserRole } from "../../common/commonEnum";
 import bcrypt from "bcrypt";
 import { sendEmail } from "../../utils/sendEmail";
 import { ApiError } from "../../utils/ApiError";
@@ -19,164 +19,36 @@ interface LoginInput {
   role?: RoleEnum;
 }
 
-export const registerService = async ({ fullName, email, password, role }: RegisterInput) => {
-  // 1️⃣ Validate required fields
-  if (!fullName || !email || !password || !role) {
-    throw new ApiError("Full name, email, password and role are required", 400);
-  }
+export const registerService = async ({
+  fullName,
+  email,
+  phone,
+  password,
+}: {
+  fullName: string;
+  email: string;
+  phone: string;
+  password: string;
+}) => {
+  // ✅ check existing user (email OR phone)
+  const existingUser = await User.findOne({
+    $or: [{ email }, { phone }],
+  });
 
-  // 2️⃣ Validate email format
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    throw new ApiError("Invalid email address", 400);
-  }
-
-  // 3️⃣ Check if user already exists
-  const existingUser = await User.findOne({ email });
   if (existingUser) {
-    // throw new ApiError("Email already registered please login", 409);
-
-    if (existingUser.roles.includes(role)) {
-      throw new ApiError(`Already registered as ${role}`, 409);
-    }
-
-    // add new role
-    existingUser.roles.push(role);
-    existingUser.onboarding.set(role, { step: OnboardingStep.REGISTERED });
-
-    await existingUser.save();
-
-    return {
-      id: existingUser._id,
-      email: existingUser.email,
-      role,
-      onboardingStep: OnboardingStep.REGISTERED,
-      message: `Role ${role} added successfully`,
-    };
+    throw new ApiError("User with email or phone already exists", 400);
   }
 
-  // 4️⃣ Create user
   const user = await User.create({
-    fullName,
+    name: fullName,
     email,
-    password, // hashed automatically by pre-save hook
-    roles: [role],
-    activeRole: role,
-    status: UserEnum.PENDING,
-    isEmailVerified: false,
-    onboarding: new Map([[role, { step: OnboardingStep.REGISTERED }]]),
+    phone, // 🔥 important
+    password,
+    roles: [UserRole.USER],
   });
 
-  // 5️⃣ Generate OTP
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const otpHash = await bcrypt.hash(otp, 10);
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-
-  await EmailOtp.create({
-    userId: user._id,
-    otpHash,
-    expiresAt,
-    attempts: 0,
-  });
-
-  const html = `
-  <div style="font-family: sans-serif; text-align: center;">
-    <h2>Welcome to MyApp!</h2>
-    <p>Your verification code is:</p>
-    <h1 style="color: #4CAF50;">${otp}</h1>
-    <p>This code will expire in 10 minutes.</p>
-  </div>
-`;
-
-  await sendEmail({
-    to: user.email,
-    subject: "Verify Your Email",
-    html,
-  });
-
-  // 7️⃣ Return minimal safe user info
-  return {
-    id: user._id,
-    fullName: user.fullName,
-    email: user.email,
-    role: role,
-    onboardingStep: OnboardingStep.REGISTERED,
-    message: "Registration successful, please verify your email",
-  };
+  return user;
 };
-
-export const verifyOtpService = async (userId: string, otp: string) => {
-  const otpRecord = await EmailOtp.findOne({ userId });
-
-  if (!otpRecord) {
-    throw new ApiError("No OTP found. Please request a new one", 404);
-  }
-
-  if (otpRecord.expiresAt < new Date()) {
-    await otpRecord.deleteOne();
-    throw new ApiError("OTP expired. Please request a new one", 400);
-  }
-
-  const isValid = await bcrypt.compare(otp, otpRecord.otpHash);
-  if (!isValid) {
-    otpRecord.attempts += 1;
-    await otpRecord.save();
-    throw new ApiError("Invalid OTP", 400);
-  }
-
-  // OTP valid → update user
-  const user = await User.findById(userId);
-  if (!user) throw new ApiError("User not found", 404);
-
-  user.isEmailVerified = true;
-  user.status = UserEnum.ACTIVE;
-
-  await user.save();
-
-  // Delete OTP after verification
-  await otpRecord.deleteOne();
-
-  return {
-    id: user._id,
-    fullName: user.fullName,
-    email: user.email,
-    role: user.activeRole,
-    onboardingStep: user.activeRole === RoleEnum.ADMIN ? null : user.onboarding.get(user.activeRole)?.step,
-    message: "Email verified successfully",
-  };
-};
-
-export const resendOtpService = async (userId: string, duringLogin = false) => {
-  const user = await User.findById(userId);
-  if (!user) throw new ApiError("User not found", 404);
-  if (user.isEmailVerified) throw new ApiError("Email already verified", 400);
-
-  // Generate new OTP
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const otpHash = await bcrypt.hash(otp, 10);
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-
-  // Save OTP (overwrite existing)
-  await EmailOtp.findOneAndUpdate({ userId }, { otpHash, expiresAt, attempts: 0 }, { upsert: true });
-  const subject = duringLogin ? "Otp has been sent" : "Resend OTP - MyApp";
-  // Send OTP via HTML email
-  const html = `
-    <div style="font-family: sans-serif; text-align: center;">
-      <h2>Verify Your Email</h2>
-      <p>Your OTP is:</p>
-      <h1 style="color: #4CAF50;">${otp}</h1>
-      <p>It will expire in 10 minutes.</p>
-    </div>
-  `;
-  await sendEmail({
-    to: user.email,
-    subject: subject,
-    html,
-  });
-
-  return { message: `OTP ${duringLogin ? "sent" : "resent"} successfully` };
-};
-
 export const loginService = async ({ email, password, role }: LoginInput) => {
   // 1️⃣ Find user by email
   const user = await User.findOne({ email }).select("+password");
