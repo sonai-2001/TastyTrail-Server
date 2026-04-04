@@ -10,6 +10,7 @@ export const validate =
       next();
     } catch (err: any) {
       // 🔥 Convert Zod error → your format
+      console.log("error =====>", err)
       const formattedErrors = err.errors?.map((e: any) => ({
         field: e.path.join("."), // e.g. "email"
         message: e.message,

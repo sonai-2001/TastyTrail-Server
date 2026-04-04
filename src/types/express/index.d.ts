@@ -7,7 +7,7 @@ declare global {
     interface UserPayload extends JwtPayload {
       id: Types.ObjectId;
       email: string;
-      role: RoleEnum;
+      roles: string[];
     }
 
     interface Request {

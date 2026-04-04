@@ -1,9 +1,10 @@
-export enum UserRole {
+export enum UserRoleEnum {
   USER = "user",
   ADMIN = "admin",
-  OWNER = "owner",
+  RES_PARTNER = "res_partner",
   DRIVER = "driver",
 }
+// "user" | "res_partner" | "driver" | "admin";
 
 export enum RoleEnum {
   ADMIN = "admin",
