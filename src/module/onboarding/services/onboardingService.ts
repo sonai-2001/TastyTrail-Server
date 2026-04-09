@@ -50,7 +50,7 @@ export const updateOnboardingService = async (
   /*
   Final Step
   */
-  if (step === 4) {
+  if (step === 5) {
 
     const details = onboarding.restaurantDetails;
 
