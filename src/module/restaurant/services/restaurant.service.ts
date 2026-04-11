@@ -20,3 +20,50 @@ export const updateRestaurantStatus = async (id: string, isActive: boolean) => {
 export const getPartnerRestaurants = async (ownerId: string) => {
   return await Restaurant.find({ owner: ownerId });
 };
+
+export const getRestaurantsService = async (
+  userId: string,
+  page = 1,
+  limit = 10,
+  status: "all" | "active" | "inactive" = "all"
+) => {
+
+  const query: any = {
+    owner: userId
+  };
+
+  if (status === "active") {
+    query.isActive = true;
+  }
+
+  if (status === "inactive") {
+    query.isActive = false;
+  }
+
+  const skip = (page - 1) * limit;
+
+  const restaurants = await Restaurant.find(query)
+    .select("_id name city isActive rating")
+    .skip(skip)
+    .limit(limit)
+    .sort({ createdAt: -1 });
+
+  const total = await Restaurant.countDocuments(query);
+
+  const totalPages = Math.ceil(total / limit);
+
+  return {
+    restaurants,
+    meta: {
+      totalDocs: total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+      nextPage: page < totalPages ? page + 1 : null,
+      prevPage: page > 1 ? page - 1 : null,
+      skip
+    }
+  };
+};

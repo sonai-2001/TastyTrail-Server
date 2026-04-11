@@ -19,5 +19,10 @@ router.patch(
   authorize(RoleEnum.RESTAURANT_OWNER),
   partnerController.updateRestaurantSettings
 );
+router.get(
+  "/restaurants",
+  authorize("res_partner"),
+  partnerController.getRestaurantsController
+);
 
 export default router;

@@ -3,6 +3,7 @@ import { RestaurantOnboarding } from "../../../models/res_onnboarding.schema.";
 import { UpdateOnboardingDto } from "../dtos/updateOnboardingDto";
 import { ApiError } from "../../../utils/ApiError";
 import { Restaurant } from "../../../models/restaurant.schema";
+import { User } from "../../../models/user.schema.";
 
 export const getOnboardingService = async (userId: Types.ObjectId | string) => {
 
@@ -73,6 +74,12 @@ export const updateOnboardingService = async (
     onboarding.completed = true;
 
     await onboarding.save();
+
+    // Add role if not exists
+    await User.updateOne(
+      { _id: userId, roles: { $ne: "res_partner" } },
+      { $push: { roles: "res_partner" } }
+    );
 
   }
 

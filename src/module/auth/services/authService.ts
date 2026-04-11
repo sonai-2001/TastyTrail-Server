@@ -1,3 +1,4 @@
+import { Restaurant } from "../../../models/restaurant.schema";
 import { User } from "../../../models/user.schema.";
 import { ApiError } from "../../../utils/ApiError";
 import { generateAccessToken } from "../../../utils/generateJwt";
@@ -56,11 +57,22 @@ export const loginService = async (
 
   const accessToken = generateAccessToken(user._id.toString());
 
+  const restaurants = await Restaurant.find({
+    owner: user._id
+  }).select("name _id")
+  let restaurantCount = restaurants.length
+
+
+
+
+
   const userObj = user.toObject();
   delete userObj.password;
 
   return {
     user: userObj,
-    accessToken
+    accessToken,
+    restaurantCount,
+    restaurants
   };
 };
