@@ -25,7 +25,7 @@ export interface IRestaurant extends Document {
 
   pincode: string;
 
-  cuisines: string[];
+  cuisines: mongoose.Types.ObjectId[];
 
   images?: string[];
 
@@ -72,7 +72,8 @@ const restaurantSchema = new Schema<IRestaurant>(
     },
 
     cuisines: {
-      type: [String],
+      type: [Schema.Types.ObjectId],
+      ref: "Cuisine",
       default: []
     },
 

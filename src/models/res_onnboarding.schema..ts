@@ -20,7 +20,7 @@ interface IRestaurantDetails {
   address?: string;
   city?: string;
   pincode?: string;
-  cuisines?: string[];
+  cuisines?: mongoose.Types.ObjectId[];
   gstNumber?: string;
   fssaiNumber?: string;
   images?: string[];
@@ -81,7 +81,10 @@ const restaurantOnboardingSchema = new Schema<IRestaurantOnboarding>(
       address: String,
       city: String,
       pincode: String,
-      cuisines: [String],
+      cuisines: [{
+        type: Schema.Types.ObjectId,
+        ref: "Cuisine"
+      }],
       gstNumber: String,
       fssaiNumber: String,
       images: [String]
