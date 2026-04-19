@@ -7,6 +7,7 @@ export interface RegisterInput {
   email: string;
   phone: string;
   password: string;
+  otp?: string;
   roles?: ("user" | "res_partner" | "driver" | "admin")[];
 }
 
