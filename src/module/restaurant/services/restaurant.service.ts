@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import { Restaurant } from "../../../models/restaurant.schema";
 import { ApiError } from "../../../utils/ApiError";
 
@@ -19,6 +20,56 @@ export const updateRestaurantStatus = async (id: string, isActive: boolean) => {
 
 export const getPartnerRestaurants = async (ownerId: string) => {
   return await Restaurant.find({ owner: ownerId });
+};
+
+
+interface PaginationParams {
+  page?: number;
+  limit?: number;
+}
+
+export const getRestaurantsByUser = async (
+  userId: Types.ObjectId,
+  { page = 1, limit = 10 }: PaginationParams
+) => {
+  if (!Types.ObjectId.isValid(userId)) {
+    throw new ApiError("Invalid user ID", 400);
+  }
+
+  const skip = (page - 1) * limit;
+
+  const query = {
+    owner: userId
+    // ❌ no isActive filter (as you requested)
+  };
+
+  const [restaurants, totalDocs] = await Promise.all([
+    Restaurant.find(query)
+      .populate("cuisines") // optional
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+
+    Restaurant.countDocuments(query)
+  ]);
+
+  const totalPages = Math.ceil(totalDocs / limit);
+
+  const meta = {
+    totalDocs,
+    skip,
+    page,
+    limit,
+    hasPrevPage: page > 1,
+    hasNextPage: page < totalPages,
+    prevPage: page > 1 ? page - 1 : null,
+    nextPage: page < totalPages ? page + 1 : null
+  };
+
+  return {
+    data: restaurants,
+    meta
+  };
 };
 
 export const getRestaurantsService = async (

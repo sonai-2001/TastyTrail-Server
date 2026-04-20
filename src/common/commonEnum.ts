@@ -9,7 +9,7 @@ export enum UserRoleEnum {
 export enum RoleEnum {
   ADMIN = "admin",
   USER = "user",
-  RESTAURANT_OWNER = "restaurant_owner",
+  RESTAURANT_OWNER = "res_partner",
   OUTLET_STAFF = "outlet_staff",
   DELIVERY_PARTNER = "delivery_partner"
 }
