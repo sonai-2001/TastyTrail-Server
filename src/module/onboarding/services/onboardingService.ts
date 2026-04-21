@@ -51,6 +51,7 @@ export const updateOnboardingService = async (
   /*
   Final Step
   */
+ let completedRestaurant;
   if (step === 5) {
 
     const details = onboarding.restaurantDetails;
@@ -59,7 +60,7 @@ export const updateOnboardingService = async (
       throw new ApiError("Restaurant name is required");
     }
 
-    await Restaurant.create({
+    completedRestaurant = await Restaurant.create({
       owner: userId,
       name: details.restaurantName,
       serviceType: onboarding.serviceType,
@@ -83,5 +84,8 @@ export const updateOnboardingService = async (
 
   }
 
-  return onboarding;
+  return {
+    onboarding,
+    completedRestaurant
+  };
 };
