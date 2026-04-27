@@ -28,64 +28,38 @@ export const updateOnboardingService = async (
   userId: Types.ObjectId | string,
   data: UpdateOnboardingDto
 ) => {
-
   const { step, ...fields } = data;
 
   const onboarding = await RestaurantOnboarding.findOne({
     user: userId,
-    completed: false
+    status: { $in: ["draft", "rejected"] } // ✅ allow editing only
   });
 
   if (!onboarding) {
     throw new ApiError("Onboarding not found", 404);
   }
 
+  // update fields
   Object.assign(onboarding, fields);
 
   if (step) {
     onboarding.step = step;
   }
 
-  await onboarding.save();
-
-  /*
-  Final Step
-  */
- let completedRestaurant;
+  // ✅ Final step → submit for review
   if (step === 5) {
-
     const details = onboarding.restaurantDetails;
 
     if (!details?.restaurantName) {
       throw new ApiError("Restaurant name is required");
     }
 
-    completedRestaurant = await Restaurant.create({
-      owner: userId,
-      name: details.restaurantName,
-      serviceType: onboarding.serviceType,
-      address: details.address,
-      city: details.city,
-      pincode: details.pincode,
-      cuisines: details.cuisines,
-      images: details.images,
-      availability: onboarding.serviceAvailability
-    });
-
-    onboarding.completed = true;
-
-    await onboarding.save();
-
-    // Add role if not exists
-    await User.updateOne(
-      { _id: userId, roles: { $ne: "res_partner" } },
-      { $push: { roles: "res_partner" } }
-    );
-
+    onboarding.status = "pending"; // 🔥 key change
   }
 
+  await onboarding.save();
+
   return {
-    onboarding,
-    completedRestaurant
+    onboarding
   };
 };

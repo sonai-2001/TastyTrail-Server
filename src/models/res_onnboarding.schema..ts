@@ -48,6 +48,12 @@ export interface IRestaurantOnboarding extends Document {
   serviceAvailability?: IServiceAvailability[];
 
   paymentDetails?: IPaymentDetails;
+  status: "draft" | "pending" | "approved" | "rejected";
+  rejectionReason?: string;
+  reviewedBy?: mongoose.Types.ObjectId;
+  reviewedAt?: Date;
+  restaurantId?: mongoose.Types.ObjectId;
+
 }
 
 const restaurantOnboardingSchema = new Schema<IRestaurantOnboarding>(
@@ -63,9 +69,25 @@ const restaurantOnboardingSchema = new Schema<IRestaurantOnboarding>(
       default: 1
     },
 
-    completed: {
-      type: Boolean,
-      default: false
+    status: {
+      type: String,
+      enum: ["draft", "pending", "approved", "rejected"],
+      default: "draft",
+      index: true
+    },
+
+    rejectionReason: String,
+
+    reviewedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User"
+    },
+
+    reviewedAt: Date,
+
+    restaurantId: {
+      type: Schema.Types.ObjectId,
+      ref: "Restaurant"
     },
 
     serviceType: {

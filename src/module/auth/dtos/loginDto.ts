@@ -12,7 +12,9 @@ export interface LoginResponse {
   accessToken: string;
   restaurantCount: number;
   restaurants: {
-    _id: Types.ObjectId;
+    _id: string;
     name: string;
+    status: string;
+    source: string;
   }[];
 }

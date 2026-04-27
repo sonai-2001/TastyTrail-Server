@@ -6,6 +6,7 @@ import { generateAccessToken } from "../../../utils/generateJwt";
 import { sendEmail } from "../../../utils/sendEmail";
 import { LoginInput, LoginResponse } from "../dtos/loginDto";
 import { RegisterInput, RegisterResponse } from "../dtos/registerDto";
+import { RestaurantOnboarding } from "../../../models/res_onnboarding.schema.";
 
 export const sendOtpService = async (email: string): Promise<void> => {
   const existingUser = await User.findOne({ email });
@@ -84,8 +85,6 @@ export const registerService = async (
 export const loginService = async (
   data: LoginInput
 ): Promise<LoginResponse> => {
-// ... existing login code unchanged
-
 
   const { email, password } = data;
 
@@ -103,14 +102,35 @@ export const loginService = async (
 
   const accessToken = generateAccessToken(user._id.toString());
 
+  // ✅ Approved restaurants
   const restaurants = await Restaurant.find({
     owner: user._id
-  }).select("name _id")
-  let restaurantCount = restaurants.length
+  }).select("name _id");
 
+  // ✅ Non-draft onboarding (pending + rejected)
+  const onboardings = await RestaurantOnboarding.find({
+    user: user._id,
+    status: { $in: ["pending", "rejected"] }
+  }).select("restaurantDetails.restaurantName status");
 
+  // ✅ Merge both
+  const entries = [
+    ...restaurants.map(r => ({
+      _id: r._id,
+      name: r.name || '',
+      status: "approved",
+      source: "restaurant"
+    })),
 
+    ...onboardings.map(o => ({
+      _id: o._id,
+      name: o.restaurantDetails?.restaurantName || 'Unknown',
+      status: o.status,
+      source: "onboarding"
+    }))
+  ];
 
+  const restaurantCount = restaurants.length;
 
   const userObj = user.toObject();
   delete userObj.password;
@@ -119,6 +139,6 @@ export const loginService = async (
     user: userObj,
     accessToken,
     restaurantCount,
-    restaurants
+    restaurants:entries // 🔥 replace restaurants with this
   };
 };
